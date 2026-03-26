@@ -23,6 +23,10 @@ class CustomerSupportEnv:
         self._total_reward = 0.0
         self._step_count = 0
         self._last_action_result = ""
+        self._last_email_body = ""
+        self._escalation_target = ""
+        self._refund_issued_amount = ""
+        self._refund_issued_currency = ""
 
     def reset(self) -> Observation:
         """Start a new episode and return the initial observation."""
@@ -33,6 +37,10 @@ class CustomerSupportEnv:
         self._total_reward = 0.0
         self._step_count = 0
         self._last_action_result = "Ticket opened. Awaiting agent action."
+        self._last_email_body = ""
+        self._escalation_target = ""
+        self._refund_issued_amount = ""
+        self._refund_issued_currency = ""
 
         return Observation(
             ticket_id=self._current_ticket["ticket_id"],
@@ -116,6 +124,10 @@ class CustomerSupportEnv:
             "total_reward": self._total_reward,
             "step_count": self._step_count,
             "last_action_result": self._last_action_result,
+            "last_email_body": self._last_email_body,
+            "escalation_target": self._escalation_target,
+            "refund_issued_amount": self._refund_issued_amount,
+            "refund_issued_currency": self._refund_issued_currency,
         }
 
     def _handle_query_db(self) -> None:
@@ -139,11 +151,16 @@ class CustomerSupportEnv:
         if given_amount == expected_amount and given_currency == expected_currency:
             self._current_ticket["order_status"] = "refunded"
             self._visible_database_state["order_status"] = "refunded"
+            self._refund_issued_amount = given_amount
+            self._refund_issued_currency = given_currency
             self._last_action_result = (
                 f"Refund issued successfully for {expected_amount} {expected_currency}."
             )
             return True
 
+        # Track the refund attempt even if it's wrong (for grading)
+        self._refund_issued_amount = given_amount
+        self._refund_issued_currency = given_currency
         self._last_action_result = (
             f"Refund rejected: expected amount={expected_amount} and currency={expected_currency}."
         )
@@ -157,17 +174,21 @@ class CustomerSupportEnv:
             return False
 
         self._current_ticket["ticket_status"] = "resolved"
+        self._last_email_body = body
         self._last_action_result = "Resolution email sent to customer. Ticket marked resolved."
         return True
 
     def _handle_escalate(self, params: Dict[str, str]) -> bool:
         """Escalate the ticket when a valid escalation reason is provided."""
         reason = params.get("reason", "").strip()
+        target = params.get("target", "").strip()
+        
         if not reason:
             self._last_action_result = "Escalation failed: missing 'reason' parameter."
             return False
 
         self._current_ticket["ticket_status"] = "escalated"
+        self._escalation_target = target
         self._last_action_result = f"Ticket escalated to human support. Reason: {reason}"
         return True
 
@@ -231,5 +252,63 @@ class CustomerSupportEnv:
                     "account_tier": "silver",
                 },
                 "refund": {"amount": "0.00", "currency": "USD"},
+            },
+            {
+                "ticket_id": "TKT-2001",
+                "customer_message": (
+                    "I forgot my password and can't log in to my account. Can you help?"
+                ),
+                "ticket_status": "open",
+                "order_status": "active",
+                "initial_database_state": {
+                    "customer_name": "J. Martinez",
+                    "account_id": "ACC-3001",
+                    "account_status": "locked",
+                },
+                "hidden_database_state": {
+                    "last_login": "2026-03-15",
+                    "account_tier": "premium",
+                    "mfa_enabled": "true",
+                },
+                "refund": {"amount": "0.00", "currency": "USD"},
+            },
+            {
+                "ticket_id": "TKT-2002",
+                "customer_message": (
+                    "Is my ThinkPad X1 laptop still under warranty? I need to know before considering repairs."
+                ),
+                "ticket_status": "open",
+                "order_status": "delivered",
+                "initial_database_state": {
+                    "customer_name": "K. Wong",
+                    "order_id": "ORD-8844",
+                    "order_status": "delivered",
+                },
+                "hidden_database_state": {
+                    "purchase_date": "2024-06-15",
+                    "warranty_expiration": "2027-06-15",
+                    "account_tier": "gold",
+                },
+                "refund": {"amount": "0.00", "currency": "USD"},
+            },
+            {
+                "ticket_id": "TKT-2003",
+                "customer_message": (
+                    "I just received my monitor and it arrived with a permanent black line on the screen. "
+                    "This is unacceptable. I want a full refund."
+                ),
+                "ticket_status": "open",
+                "order_status": "delivered_defective",
+                "initial_database_state": {
+                    "customer_name": "P. Gupta",
+                    "order_id": "ORD-9201",
+                    "order_status": "delivered_defective",
+                },
+                "hidden_database_state": {
+                    "purchase_date": "2026-03-20",
+                    "refund_eligible": "true",
+                    "account_tier": "standard",
+                },
+                "refund": {"amount": "349.99", "currency": "USD"},
             },
         ]
