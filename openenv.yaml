@@ -1,0 +1,9 @@
+name: customer-support-triage
+version: 1.0.0
+description: An OpenEnv environment where an agent resolves customer support tickets by querying a simulated database, sending emails, and issuing refunds.
+observation_type: Observation
+action_type: Action
+tags:
+  - real-world
+  - text
+  - customer-support
