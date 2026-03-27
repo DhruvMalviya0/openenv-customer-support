@@ -12,7 +12,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 client: Optional[OpenAI] = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
 # Configuration
-API_BASE_URL = "http://localhost:7860"
+API_BASE_URL = "https://leaf46391-customer-support-triage.hf.space"
 MAX_STEPS = 10
 
 # Known ticket-level refund amounts from the local environment scenarios.
