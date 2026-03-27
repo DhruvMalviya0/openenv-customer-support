@@ -1,3 +1,13 @@
+---
+title: Customer Support Triage
+emoji: 🏢
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+tags:
+  - openenv
+---
 # Customer Support Triage (OpenEnv)
 
 This project implements an OpenEnv environment where an AI agent resolves customer support tickets by interacting with a simulated workflow: querying a mocked customer database, issuing refunds with strict parameter matching, sending resolution emails, or escalating tickets when needed.
